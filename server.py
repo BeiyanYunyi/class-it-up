@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer
 import torch
 from pydantic import BaseModel
 
@@ -16,21 +16,25 @@ device = torch.device(
 )
 
 # 加载模型
-model = BertForSequenceClassification.from_pretrained("./fine_tuned_bert").to(device)
-tokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
+model = torch.jit.load("./fine_tuned_bert/bert_torchscript.pt").to(device)
+tokenizer: BertTokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
 
 
 @app.post("/predict")
 def predict(comment: Item):
     encoding = tokenizer(
-        comment.content, padding="max_length", max_length=128, return_tensors="pt"
+        comment.content,
+        padding="max_length",
+        max_length=128,
+        truncation=True,
+        return_tensors="pt",
     )
     input_ids, attention_mask = encoding["input_ids"].to(device), encoding[
         "attention_mask"
     ].to(device)
 
     with torch.no_grad():
-        logits = model(input_ids, attention_mask=attention_mask).logits
+        logits = model(input_ids, attention_mask=attention_mask)
         prediction = torch.argmax(logits, dim=1).item()
 
     return {"predicted_label": prediction}
