@@ -10,3 +10,4 @@ wheels/
 .venv
 fine_tuned_bert
 waline.json
+*.onnx

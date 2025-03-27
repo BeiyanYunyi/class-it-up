@@ -16,7 +16,6 @@ class BertWrapper(torch.nn.Module):
 model_path = "./fine_tuned_bert"
 model = BertForSequenceClassification.from_pretrained(model_path)
 wrapped_model = BertWrapper(model)
-wrapped_model.eval()
 tokenizer = BertTokenizer.from_pretrained(model_path)
 
 # 切换到 eval 模式

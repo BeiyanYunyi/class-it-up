@@ -1,7 +1,21 @@
 from fastapi import FastAPI
+import numpy as np
 from transformers import BertTokenizer
 import torch
 from pydantic import BaseModel
+import onnxruntime as ort
+
+session = ort.InferenceSession(
+    "bert_model_quantized.onnx",
+    providers=["CPUExecutionProvider"],  # CPU 部署
+    sess_options=ort.SessionOptions(),
+)
+
+# 启用内存优化（减少 GPU/CPU 内存占用）
+session.set_providers(
+    ["CPUExecutionProvider"],
+    provider_options=[{"arena_extend_strategy": "kSameAsRequested"}],
+)
 
 
 class Item(BaseModel):
@@ -16,7 +30,6 @@ device = torch.device(
 )
 
 # 加载模型
-model = torch.jit.load("./fine_tuned_bert/bert_torchscript.pt").to(device)
 tokenizer: BertTokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
 
 
@@ -27,15 +40,14 @@ def predict(comment: Item):
         padding="max_length",
         max_length=128,
         truncation=True,
-        return_tensors="pt",
+        return_tensors="np",
     )
-    input_ids, attention_mask = encoding["input_ids"].to(device), encoding[
-        "attention_mask"
-    ].to(device)
+    input_ids, attention_mask = encoding["input_ids"], encoding["attention_mask"]
 
-    with torch.no_grad():
-        logits = model(input_ids, attention_mask=attention_mask)
-        prediction = torch.argmax(logits, dim=1).item()
+    outputs = session.run(
+        ["logits"], {"input_ids": input_ids, "attention_mask": attention_mask}
+    )
+    prediction = int(np.argmax(outputs[0], axis=1)[0])
 
     return {"predicted_label": prediction}
 
