@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 import numpy as np
 from transformers import BertTokenizer
-import torch
 from pydantic import BaseModel
 import onnxruntime as ort
 
@@ -23,11 +22,6 @@ class Item(BaseModel):
 
 
 app = FastAPI()
-device = torch.device(
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps" if torch.mps.is_available() else "cpu"
-)
 
 # 加载模型
 tokenizer: BertTokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
