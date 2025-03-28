@@ -9,5 +9,5 @@ wheels/
 # Virtual environments
 .venv
 fine_tuned_bert
-waline.json
+waline.sqlite
 *.onnx
