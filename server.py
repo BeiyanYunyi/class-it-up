@@ -3,6 +3,7 @@ import numpy as np
 from transformers import BertTokenizer
 from pydantic import BaseModel
 import onnxruntime as ort
+import logging
 
 session = ort.InferenceSession(
     "bert_model_quantized.onnx",
@@ -17,8 +18,12 @@ session.set_providers(
 )
 
 
-class Item(BaseModel):
+class ReqBody(BaseModel):
     content: str
+
+
+class Result(BaseModel):
+    predicted_label: int
 
 
 app = FastAPI()
@@ -28,7 +33,7 @@ tokenizer: BertTokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
 
 
 @app.post("/predict")
-def predict(comment: Item):
+def predict(comment: ReqBody) -> Result:
     encoding = tokenizer(
         comment.content,
         padding="max_length",
@@ -43,8 +48,9 @@ def predict(comment: Item):
     )
     prediction = int(np.argmax(outputs[0], axis=1)[0])
 
-    return {"predicted_label": prediction}
+    return Result(predicted_label=prediction)
 
 
-# 运行服务器
-# uvicorn app:app --host 0.0.0.0 --port 8000 --workers 2
+logging.getLogger("uvicorn").info(
+    f"smoke test, {predict(ReqBody(content='This is a test comment.'))}"
+)
