@@ -29,7 +29,7 @@ class Result(BaseModel):
 app = FastAPI()
 
 # 加载模型
-tokenizer: BertTokenizer = BertTokenizer.from_pretrained("./fine_tuned_bert")
+tokenizer: BertTokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
 
 
 @app.post("/predict")
