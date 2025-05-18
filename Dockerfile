@@ -27,6 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --locked --no-dev
+RUN uv run --locked --no-dev ./src/save_tokenizer.py
 
 # Then, use a final image without uv
 FROM python:3.13-slim-bookworm
