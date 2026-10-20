@@ -49,10 +49,19 @@ class CliTests(unittest.TestCase):
     def test_invalid_labels_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "data.ndjson"
-            for label in [2, -1, 0.5, None]:
+            for label in [2, -1, 0.5, None, "0"]:
                 source.write_text(json.dumps({"comment": "text", "label": label}) + "\n")
                 with self.assertRaises(ValueError):
                     load_dataframe(source)
+
+    def test_integral_float_labels_are_accepted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "data.ndjson"
+            source.write_text("\n".join(
+                json.dumps({"comment": "text", "label": label})
+                for label in [0.0, 1.0]
+            ) + "\n")
+            self.assertEqual(load_dataframe(source)["label"].to_list(), [0, 1])
 
     def test_training_arguments_are_validated(self):
         for option, value in [("--epochs", "0"), ("--batch-size", "-1"), ("--test-size", "1"), ("--learning-rate", "nan")]:

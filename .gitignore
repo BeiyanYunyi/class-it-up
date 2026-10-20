@@ -12,3 +12,5 @@ fine_tuned_bert
 waline.sqlite
 *.onnx
 !bert_model_quantized.onnx
+
+.DS_Store

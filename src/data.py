@@ -25,7 +25,10 @@ def load_dataframe(source: Path) -> pl.DataFrame:
         raise ValueError("comment and label must not contain null values")
     if frame["comment"].dtype != pl.String:
         raise ValueError("comment must contain strings")
-    if not frame["label"].is_in([0, 1]).all():
+    labels = frame["label"]
+    if not (labels.dtype.is_numeric() or labels.dtype == pl.Boolean):
+        raise ValueError("label must be 0 or 1")
+    if not ((labels == 0) | (labels == 1)).all():
         raise ValueError("label must be 0 or 1")
     return frame.select(
         pl.col("comment").str.replace_all(r"<[^>]*>", ""),
